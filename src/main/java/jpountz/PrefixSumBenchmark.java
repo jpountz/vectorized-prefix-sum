@@ -175,14 +175,14 @@ public class PrefixSumBenchmark {
     int[] output = state.output;
 
     IntVector vec0 = IntVector.fromArray(IntVector.SPECIES_128, input, 0);
-    vec0 = vec0.unslice(1);
-    vec0 = vec0.unslice(2);
+    vec0 = vec0.add(vec0.unslice(1));
+    vec0 = vec0.add(vec0.unslice(2));
     vec0.intoArray(output, 0);
 
     for (int i = IntVector.SPECIES_128.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_128.length()) {
       IntVector vec = IntVector.fromArray(IntVector.SPECIES_128, input, i);
-      vec = vec.unslice(1);
-      vec = vec.unslice(2);
+      vec = vec.add(vec.unslice(1));
+      vec = vec.add(vec.unslice(2));
       vec = vec.add(IntVector.broadcast(IntVector.SPECIES_128, output[i-1]));
       vec.intoArray(output, i);
     }
@@ -196,16 +196,16 @@ public class PrefixSumBenchmark {
     int[] output = state.output;
 
     IntVector vec0 = IntVector.fromArray(IntVector.SPECIES_256, input, 0);
-    vec0 = vec0.unslice(1);
-    vec0 = vec0.unslice(2);
-    vec0 = vec0.unslice(4);
+    vec0 = vec0.add(vec0.unslice(1));
+    vec0 = vec0.add(vec0.unslice(2));
+    vec0 = vec0.add(vec0.unslice(4));
     vec0.intoArray(output, 0);
 
     for (int i = IntVector.SPECIES_256.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_256.length()) {
       IntVector vec = IntVector.fromArray(IntVector.SPECIES_256, input, i);
-      vec = vec.unslice(1);
-      vec = vec.unslice(2);
-      vec = vec.unslice(4);
+      vec = vec.add(vec.unslice(1));
+      vec = vec.add(vec.unslice(2));
+      vec = vec.add(vec.unslice(4));
       vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[i-1]));
       vec.intoArray(output, i);
     }
@@ -227,14 +227,15 @@ public class PrefixSumBenchmark {
 
     for (int i = IntVector.SPECIES_512.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_512.length()) {
       IntVector vec = IntVector.fromArray(IntVector.SPECIES_512, input, i);
-      vec = vec.unslice(1);
-      vec = vec.unslice(2);
-      vec = vec.unslice(4);
-      vec = vec.unslice(8);
+      vec = vec.add(vec.unslice(1));
+      vec = vec.add(vec.unslice(2));
+      vec = vec.add(vec.unslice(4));
+      vec = vec.add(vec.unslice(8));
       vec = vec.add(IntVector.broadcast(IntVector.SPECIES_512, output[i-1]));
       vec.intoArray(output, i);
     }
 
     bh.consume(output);
   }
+
 }
