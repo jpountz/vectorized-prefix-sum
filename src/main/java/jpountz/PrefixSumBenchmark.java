@@ -219,10 +219,10 @@ public class PrefixSumBenchmark {
     int[] output = state.output;
 
     IntVector vec0 = IntVector.fromArray(IntVector.SPECIES_512, input, 0);
-    vec0 = vec0.unslice(1);
-    vec0 = vec0.unslice(2);
-    vec0 = vec0.unslice(4);
-    vec0 = vec0.unslice(8);
+    vec0 = vec0.add(vec0.unslice(1));
+    vec0 = vec0.add(vec0.unslice(2));
+    vec0 = vec0.add(vec0.unslice(4));
+    vec0 = vec0.add(vec0.unslice(8));
     vec0.intoArray(output, 0);
 
     for (int i = IntVector.SPECIES_512.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_512.length()) {
