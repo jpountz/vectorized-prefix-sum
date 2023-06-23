@@ -10,6 +10,8 @@ import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
 import jdk.incubator.vector.IntVector;
+import jdk.incubator.vector.VectorMask;
+import jdk.incubator.vector.VectorShuffle;
 
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
@@ -168,7 +170,7 @@ public class PrefixSumBenchmark {
 
     bh.consume(output);
   }
-  
+
   @Benchmark
   public void prefixSumVector128(PrefixSumState state, Blackhole bh) {
     int[] input = state.input;
@@ -238,4 +240,214 @@ public class PrefixSumBenchmark {
     bh.consume(output);
   }
 
+  private static final VectorShuffle<Integer> IOTA1_128 = VectorShuffle.iota(IntVector.SPECIES_128, -1, 1, true);
+  private static final VectorShuffle<Integer> IOTA2_128 = VectorShuffle.iota(IntVector.SPECIES_128, -2, 1, true);
+  private static final VectorMask<Integer> MASK1_128 = VectorMask.fromValues(IntVector.SPECIES_128, false, true, true, true);
+  private static final VectorMask<Integer> MASK2_128 = VectorMask.fromValues(IntVector.SPECIES_128, false, false, true, true);
+
+  @Benchmark
+  public void prefixSumVector128_v2(PrefixSumState state, Blackhole bh) {
+    int[] input = state.input;
+    int[] output = state.output;
+
+    IntVector vec0 = IntVector.fromArray(IntVector.SPECIES_128, input, 0);
+    vec0 = vec0.add(vec0.rearrange(IOTA1_128), MASK1_128);
+    vec0 = vec0.add(vec0.rearrange(IOTA2_128), MASK2_128);
+    vec0.intoArray(output, 0);
+
+    for (int i = IntVector.SPECIES_128.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_128.length()) {
+      IntVector vec = IntVector.fromArray(IntVector.SPECIES_128, input, i);
+      vec = vec.add(vec0.rearrange(IOTA1_128), MASK1_128);
+      vec = vec.add(vec0.rearrange(IOTA2_128), MASK2_128);
+      vec = vec.add(IntVector.broadcast(IntVector.SPECIES_128, output[i-1]));
+      vec.intoArray(output, i);
+    }
+
+    bh.consume(output);
+  }
+
+  private static final VectorShuffle<Integer> IOTA1_256 = VectorShuffle.iota(IntVector.SPECIES_256, -1, 1, true);
+  private static final VectorShuffle<Integer> IOTA2_256 = VectorShuffle.iota(IntVector.SPECIES_256, -2, 1, true);
+  private static final VectorShuffle<Integer> IOTA4_256 = VectorShuffle.iota(IntVector.SPECIES_256, -4, 1, true);
+  private static final VectorMask<Integer> MASK1_256 = VectorMask.fromValues(IntVector.SPECIES_256, false, true, true, true, true, true, true, true);
+  private static final VectorMask<Integer> MASK2_256 = VectorMask.fromValues(IntVector.SPECIES_256, false, false, true, true, true, true, true, true);
+  private static final VectorMask<Integer> MASK4_256 = VectorMask.fromValues(IntVector.SPECIES_256, false, false, false, false, true, true, true, true);
+
+
+  @Benchmark
+  public void prefixSumVector256_v2(PrefixSumState state, Blackhole bh) {
+    int[] input = state.input;
+    int[] output = state.output;
+
+    IntVector vec0 = IntVector.fromArray(IntVector.SPECIES_256, input, 0);
+    vec0 = vec0.add(vec0.rearrange(IOTA1_256), MASK1_256);
+    vec0 = vec0.add(vec0.rearrange(IOTA2_256), MASK2_256);
+    vec0 = vec0.add(vec0.rearrange(IOTA4_256), MASK4_256);
+    vec0.intoArray(output, 0);
+
+    for (int i = IntVector.SPECIES_256.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_256.length()) {
+      IntVector vec = IntVector.fromArray(IntVector.SPECIES_256, input, i);
+      vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+      vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+      vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+      vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[i-1]));
+      vec.intoArray(output, i);
+    }
+
+    bh.consume(output);
+  }
+
+  @Benchmark
+  public void prefixSumVector256_v2_inline(PrefixSumState state, Blackhole bh) {
+    int[] input = state.input;
+    int[] output = state.output;
+
+    IntVector vec = IntVector.fromArray(IntVector.SPECIES_256, input, 0);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec.intoArray(output, 0);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 8);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[7]));
+    vec.intoArray(output, 8);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 16);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[15]));
+    vec.intoArray(output, 16);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 24);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[23]));
+    vec.intoArray(output, 24);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 32);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[31]));
+    vec.intoArray(output, 32);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 40);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[39]));
+    vec.intoArray(output, 40);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 48);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[47]));
+    vec.intoArray(output, 48);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 56);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[55]));
+    vec.intoArray(output, 56);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 64);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[63]));
+    vec.intoArray(output, 64);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 72);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[71]));
+    vec.intoArray(output, 72);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 80);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[79]));
+    vec.intoArray(output, 80);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 88);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[87]));
+    vec.intoArray(output, 88);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 96);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[95]));
+    vec.intoArray(output, 96);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 104);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[103]));
+    vec.intoArray(output, 104);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 112);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[111]));
+    vec.intoArray(output, 112);
+
+    vec = IntVector.fromArray(IntVector.SPECIES_256, input, 120);
+    vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
+    vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
+    vec = vec.add(vec.rearrange(IOTA4_256), MASK4_256);
+    vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[119]));
+    vec.intoArray(output, 120);
+
+    bh.consume(output);
+  }
+
+  private static final VectorShuffle<Integer> IOTA1_512 = VectorShuffle.iota(IntVector.SPECIES_512, -1, 1, true);
+  private static final VectorShuffle<Integer> IOTA2_512 = VectorShuffle.iota(IntVector.SPECIES_512, -2, 1, true);
+  private static final VectorShuffle<Integer> IOTA4_512 = VectorShuffle.iota(IntVector.SPECIES_512, -4, 1, true);
+  private static final VectorShuffle<Integer> IOTA8_512 = VectorShuffle.iota(IntVector.SPECIES_512, -8, 1, true);
+  private static final VectorMask<Integer> MASK1_512 = VectorMask.fromValues(IntVector.SPECIES_512, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true);
+  private static final VectorMask<Integer> MASK2_512 = VectorMask.fromValues(IntVector.SPECIES_512, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true);
+  private static final VectorMask<Integer> MASK4_512 = VectorMask.fromValues(IntVector.SPECIES_512, false, false, false, false, true, true, true, true, true, true, true, true, true, true, true, true);
+  private static final VectorMask<Integer> MASK8_512 = VectorMask.fromValues(IntVector.SPECIES_512, false, false, false, false, false, false, false, false, true, true, true, true, true, true, true, true);
+
+
+  @Benchmark
+  public void prefixSumVector512_v2(PrefixSumState state, Blackhole bh) {
+    int[] input = state.input;
+    int[] output = state.output;
+
+    IntVector vec0 = IntVector.fromArray(IntVector.SPECIES_512, input, 0);
+    vec0 = vec0.add(vec0.rearrange(IOTA1_512), MASK1_512);
+    vec0 = vec0.add(vec0.rearrange(IOTA2_512), MASK2_512);
+    vec0 = vec0.add(vec0.rearrange(IOTA4_512), MASK4_512);
+    vec0 = vec0.add(vec0.rearrange(IOTA8_512), MASK8_512);
+    vec0.intoArray(output, 0);
+
+    for (int i = IntVector.SPECIES_512.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_512.length()) {
+      IntVector vec = IntVector.fromArray(IntVector.SPECIES_512, input, i);
+      vec = vec.add(vec.rearrange(IOTA1_512), MASK1_512);
+      vec = vec.add(vec.rearrange(IOTA2_512), MASK2_512);
+      vec = vec.add(vec.rearrange(IOTA4_512), MASK4_512);
+      vec = vec.add(vec.rearrange(IOTA8_512), MASK8_512);
+      vec = vec.add(IntVector.broadcast(IntVector.SPECIES_512, output[i-1]));
+      vec.intoArray(output, i);
+    }
+
+    bh.consume(output);
+  }
 }
