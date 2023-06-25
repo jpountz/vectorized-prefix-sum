@@ -1,12 +1,10 @@
 package jpountz;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
-import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
 import jdk.incubator.vector.IntVector;
@@ -16,10 +14,16 @@ import jdk.incubator.vector.VectorShuffle;
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(1)
+@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
+@State(Scope.Benchmark)
 public class PrefixSumBenchmark {
 
   // See this good resource on using SIMD for prefix sums: https://en.algorithmica.org/hpc/algorithms/prefix/
+
+  @Setup(Level.Trial)
+  public void setup() {
+    sanity();
+  }
 
   @Benchmark
   public void prefixSumScalar(PrefixSumState state, Blackhole bh) {
@@ -257,8 +261,8 @@ public class PrefixSumBenchmark {
 
     for (int i = IntVector.SPECIES_128.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_128.length()) {
       IntVector vec = IntVector.fromArray(IntVector.SPECIES_128, input, i);
-      vec = vec.add(vec0.rearrange(IOTA1_128), MASK1_128);
-      vec = vec.add(vec0.rearrange(IOTA2_128), MASK2_128);
+      vec = vec.add(vec.rearrange(IOTA1_128), MASK1_128);
+      vec = vec.add(vec.rearrange(IOTA2_128), MASK2_128);
       vec = vec.add(IntVector.broadcast(IntVector.SPECIES_128, output[i-1]));
       vec.intoArray(output, i);
     }
@@ -449,5 +453,31 @@ public class PrefixSumBenchmark {
     }
 
     bh.consume(output);
+  }
+
+  public void sanity() {
+    var bh = new Blackhole("Today's password is swordfish. I understand instantiating Blackholes directly is dangerous.");
+    var state = new PrefixSumState();
+    state.setup();
+    prefixSumScalar(state, bh);
+    int[] expectedOutput = state.output;
+
+    assertEqual(expectedOutput, this::prefixSumScalarInlined, bh);
+    assertEqual(expectedOutput, this::prefixSumVector128, bh);
+    assertEqual(expectedOutput, this::prefixSumVector128_v2, bh);
+    assertEqual(expectedOutput, this::prefixSumVector256, bh);
+    assertEqual(expectedOutput, this::prefixSumVector256_v2, bh);
+    assertEqual(expectedOutput, this::prefixSumVector256_v2_inline, bh);
+    assertEqual(expectedOutput, this::prefixSumVector512, bh);
+    assertEqual(expectedOutput, this::prefixSumVector512_v2, bh);
+  }
+
+  static void assertEqual(int[] expectedOutput, BiConsumer<PrefixSumState, Blackhole> func, Blackhole bh) {
+    var state = new PrefixSumState();
+    state.setup();
+    func.accept(state, bh);
+    if (Arrays.equals(expectedOutput, state.output) == false) {
+      throw new AssertionError("not equal: expected:\n" + Arrays.toString(expectedOutput) + ", got:\n" + Arrays.toString(state.output));
+    }
   }
 }
