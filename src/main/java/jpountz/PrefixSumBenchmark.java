@@ -467,6 +467,7 @@ public class PrefixSumBenchmark {
     assertEqual(expectedOutput, this::prefixSumVector128_v2, bh);
     assertEqual(expectedOutput, this::prefixSumVector256, bh);
     assertEqual(expectedOutput, this::prefixSumVector256_v2, bh);
+    assertEqual(expectedOutput, this::prefixSumVector256_v2_inline, bh);
     assertEqual(expectedOutput, this::prefixSumVector512, bh);
     assertEqual(expectedOutput, this::prefixSumVector512_v2, bh);
   }
