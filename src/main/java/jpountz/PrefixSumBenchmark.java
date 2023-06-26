@@ -31,7 +31,7 @@ public class PrefixSumBenchmark {
     int[] output = state.output;
 
     output[0] = input[0];
-    for (int i = 1; i < PrefixSumState.ARRAY_LENGTH; ++i) {
+    for (int i = 1; i < input.length; ++i) {
       output[i] = output[i-1] + input[i];
     }
 
@@ -185,14 +185,18 @@ public class PrefixSumBenchmark {
     vec0 = vec0.add(vec0.unslice(2));
     vec0.intoArray(output, 0);
 
-    for (int i = IntVector.SPECIES_128.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_128.length()) {
+    int upperBound = IntVector.SPECIES_128.loopBound(input.length);
+    int i = IntVector.SPECIES_128.length();
+    for (; i < upperBound; i += IntVector.SPECIES_128.length()) {
       IntVector vec = IntVector.fromArray(IntVector.SPECIES_128, input, i);
       vec = vec.add(vec.unslice(1));
       vec = vec.add(vec.unslice(2));
       vec = vec.add(IntVector.broadcast(IntVector.SPECIES_128, output[i-1]));
       vec.intoArray(output, i);
     }
-
+    for (; i < input.length; ++i) {
+      output[i] = output[i - 1] + input[i];
+    }
     bh.consume(output);
   }
 
@@ -207,7 +211,9 @@ public class PrefixSumBenchmark {
     vec0 = vec0.add(vec0.unslice(4));
     vec0.intoArray(output, 0);
 
-    for (int i = IntVector.SPECIES_256.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_256.length()) {
+    int upperBound = IntVector.SPECIES_256.loopBound(input.length);
+    int i = IntVector.SPECIES_256.length();
+    for (; i < upperBound; i += IntVector.SPECIES_256.length()) {
       IntVector vec = IntVector.fromArray(IntVector.SPECIES_256, input, i);
       vec = vec.add(vec.unslice(1));
       vec = vec.add(vec.unslice(2));
@@ -215,7 +221,9 @@ public class PrefixSumBenchmark {
       vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[i-1]));
       vec.intoArray(output, i);
     }
-
+    for (; i < input.length; ++i) {
+      output[i] = output[i - 1] + input[i];
+    }
     bh.consume(output);
   }
 
@@ -231,7 +239,9 @@ public class PrefixSumBenchmark {
     vec0 = vec0.add(vec0.unslice(8));
     vec0.intoArray(output, 0);
 
-    for (int i = IntVector.SPECIES_512.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_512.length()) {
+    int upperBound = IntVector.SPECIES_512.loopBound(input.length);
+    int i = IntVector.SPECIES_512.length();
+    for (; i < upperBound; i += IntVector.SPECIES_512.length()) {
       IntVector vec = IntVector.fromArray(IntVector.SPECIES_512, input, i);
       vec = vec.add(vec.unslice(1));
       vec = vec.add(vec.unslice(2));
@@ -240,7 +250,9 @@ public class PrefixSumBenchmark {
       vec = vec.add(IntVector.broadcast(IntVector.SPECIES_512, output[i-1]));
       vec.intoArray(output, i);
     }
-
+    for (; i < input.length; ++i) {
+      output[i] = output[i - 1] + input[i];
+    }
     bh.consume(output);
   }
 
@@ -259,14 +271,18 @@ public class PrefixSumBenchmark {
     vec0 = vec0.add(vec0.rearrange(IOTA2_128), MASK2_128);
     vec0.intoArray(output, 0);
 
-    for (int i = IntVector.SPECIES_128.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_128.length()) {
+    int upperBound = IntVector.SPECIES_128.loopBound(input.length);
+    int i = IntVector.SPECIES_128.length();
+    for (; i < upperBound; i += IntVector.SPECIES_128.length()) {
       IntVector vec = IntVector.fromArray(IntVector.SPECIES_128, input, i);
       vec = vec.add(vec.rearrange(IOTA1_128), MASK1_128);
       vec = vec.add(vec.rearrange(IOTA2_128), MASK2_128);
       vec = vec.add(IntVector.broadcast(IntVector.SPECIES_128, output[i-1]));
       vec.intoArray(output, i);
     }
-
+    for (; i < input.length; ++i) {
+      output[i] = output[i - 1] + input[i];
+    }
     bh.consume(output);
   }
 
@@ -289,7 +305,9 @@ public class PrefixSumBenchmark {
     vec0 = vec0.add(vec0.rearrange(IOTA4_256), MASK4_256);
     vec0.intoArray(output, 0);
 
-    for (int i = IntVector.SPECIES_256.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_256.length()) {
+    int upperBound = IntVector.SPECIES_256.loopBound(input.length);
+    int i = IntVector.SPECIES_256.length();
+    for (; i < upperBound; i += IntVector.SPECIES_256.length()) {
       IntVector vec = IntVector.fromArray(IntVector.SPECIES_256, input, i);
       vec = vec.add(vec.rearrange(IOTA1_256), MASK1_256);
       vec = vec.add(vec.rearrange(IOTA2_256), MASK2_256);
@@ -297,7 +315,9 @@ public class PrefixSumBenchmark {
       vec = vec.add(IntVector.broadcast(IntVector.SPECIES_256, output[i-1]));
       vec.intoArray(output, i);
     }
-
+    for (; i < input.length; ++i) {
+      output[i] = output[i - 1] + input[i];
+    }
     bh.consume(output);
   }
 
@@ -442,7 +462,9 @@ public class PrefixSumBenchmark {
     vec0 = vec0.add(vec0.rearrange(IOTA8_512), MASK8_512);
     vec0.intoArray(output, 0);
 
-    for (int i = IntVector.SPECIES_512.length(); i < PrefixSumState.ARRAY_LENGTH; i += IntVector.SPECIES_512.length()) {
+    int upperBound = IntVector.SPECIES_512.loopBound(input.length);
+    int i = IntVector.SPECIES_512.length();
+    for (; i < upperBound; i += IntVector.SPECIES_512.length()) {
       IntVector vec = IntVector.fromArray(IntVector.SPECIES_512, input, i);
       vec = vec.add(vec.rearrange(IOTA1_512), MASK1_512);
       vec = vec.add(vec.rearrange(IOTA2_512), MASK2_512);
@@ -451,29 +473,36 @@ public class PrefixSumBenchmark {
       vec = vec.add(IntVector.broadcast(IntVector.SPECIES_512, output[i-1]));
       vec.intoArray(output, i);
     }
-
+    for (; i < input.length; ++i) {
+      output[i] = output[i - 1] + input[i];
+    }
     bh.consume(output);
   }
 
   public void sanity() {
     var bh = new Blackhole("Today's password is swordfish. I understand instantiating Blackholes directly is dangerous.");
-    var state = new PrefixSumState();
-    state.setup();
-    prefixSumScalar(state, bh);
-    int[] expectedOutput = state.output;
 
-    assertEqual(expectedOutput, this::prefixSumScalarInlined, bh);
-    assertEqual(expectedOutput, this::prefixSumVector128, bh);
-    assertEqual(expectedOutput, this::prefixSumVector128_v2, bh);
-    assertEqual(expectedOutput, this::prefixSumVector256, bh);
-    assertEqual(expectedOutput, this::prefixSumVector256_v2, bh);
-    assertEqual(expectedOutput, this::prefixSumVector256_v2_inline, bh);
-    assertEqual(expectedOutput, this::prefixSumVector512, bh);
-    assertEqual(expectedOutput, this::prefixSumVector512_v2, bh);
+    for (int size : new int[] { PrefixSumState.DEFAULT_ARRAY_LENGTH, 130}) {
+      var state = new PrefixSumState(size);
+      state.setup();
+      prefixSumScalar(state, bh);
+      int[] expectedOutput = state.output;
+
+      assertEqual(expectedOutput, this::prefixSumVector128, bh);
+      assertEqual(expectedOutput, this::prefixSumVector128_v2, bh);
+      assertEqual(expectedOutput, this::prefixSumVector256, bh);
+      assertEqual(expectedOutput, this::prefixSumVector256_v2, bh);
+      assertEqual(expectedOutput, this::prefixSumVector512, bh);
+      assertEqual(expectedOutput, this::prefixSumVector512_v2, bh);
+      if (size == PrefixSumState.DEFAULT_ARRAY_LENGTH) {
+        assertEqual(expectedOutput, this::prefixSumScalarInlined, bh);
+        assertEqual(expectedOutput, this::prefixSumVector256_v2_inline, bh);
+      }
+    }
   }
 
   static void assertEqual(int[] expectedOutput, BiConsumer<PrefixSumState, Blackhole> func, Blackhole bh) {
-    var state = new PrefixSumState();
+    var state = new PrefixSumState(expectedOutput.length);
     state.setup();
     func.accept(state, bh);
     if (Arrays.equals(expectedOutput, state.output) == false) {
