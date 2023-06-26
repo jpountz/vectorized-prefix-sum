@@ -482,8 +482,9 @@ public class PrefixSumBenchmark {
   public void sanity() {
     var bh = new Blackhole("Today's password is swordfish. I understand instantiating Blackholes directly is dangerous.");
 
-    for (int size : new int[] { PrefixSumState.DEFAULT_ARRAY_LENGTH, 130}) {
-      var state = new PrefixSumState(size);
+    for (int size : new int[] { 128, 130, 1024}) {
+      var state = new PrefixSumState();
+      state.size = size;
       state.setup();
       prefixSumScalar(state, bh);
       int[] expectedOutput = state.output;
@@ -494,7 +495,7 @@ public class PrefixSumBenchmark {
       assertEqual(expectedOutput, this::prefixSumVector256_v2, bh);
       assertEqual(expectedOutput, this::prefixSumVector512, bh);
       assertEqual(expectedOutput, this::prefixSumVector512_v2, bh);
-      if (size == PrefixSumState.DEFAULT_ARRAY_LENGTH) {
+      if (size == 128) {
         assertEqual(expectedOutput, this::prefixSumScalarInlined, bh);
         assertEqual(expectedOutput, this::prefixSumVector256_v2_inline, bh);
       }
@@ -502,7 +503,8 @@ public class PrefixSumBenchmark {
   }
 
   static void assertEqual(int[] expectedOutput, BiConsumer<PrefixSumState, Blackhole> func, Blackhole bh) {
-    var state = new PrefixSumState(expectedOutput.length);
+    var state = new PrefixSumState();
+    state.size = expectedOutput.length;
     state.setup();
     func.accept(state, bh);
     if (Arrays.equals(expectedOutput, state.output) == false) {
