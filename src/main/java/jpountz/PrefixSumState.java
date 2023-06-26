@@ -8,10 +8,19 @@ import org.openjdk.jmh.annotations.State;
 @State(Scope.Benchmark)
 public class PrefixSumState {
 
-  public static final int ARRAY_LENGTH = 128;
+  static final int DEFAULT_ARRAY_LENGTH = 128;
 
-  final int[] input = new int[ARRAY_LENGTH];
-  final int[] output = new int[ARRAY_LENGTH];
+  final int[] input ;
+  final int[] output;
+
+  public PrefixSumState() {
+    this(DEFAULT_ARRAY_LENGTH);
+  }
+
+  public PrefixSumState(int size) {
+    input = new int[size];
+    output = new int[size];
+  }
 
   @Setup(Level.Trial)
   public void setup() {
