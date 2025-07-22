@@ -39,7 +39,21 @@ public class PrefixSumBenchmark {
   }
 
   @Benchmark
-  public void prefixSumScalarInlined(PrefixSumState state, Blackhole bh) {
+  public void prefixSumScalar_v2(PrefixSumState state, Blackhole bh) {
+    int[] input = state.input;
+    int[] output = state.output;
+
+    int sum = 0;
+    for (int i = 0; i < input.length; ++i) {
+      sum += input[i];
+      output[i] = sum;
+    }
+
+    bh.consume(output);
+  }
+
+  @Benchmark
+  public void prefixSumScalarUnrolled(PrefixSumState state, Blackhole bh) {
     int[] input = state.input;
     int[] output = state.output;
 
@@ -354,7 +368,7 @@ public class PrefixSumBenchmark {
   }
 
   @Benchmark
-  public void prefixSumVector256_v2_inline(PrefixSumState state, Blackhole bh) {
+  public void prefixSumVector256_v2_unrolled(PrefixSumState state, Blackhole bh) {
     int[] input = state.input;
     int[] output = state.output;
 
@@ -529,8 +543,8 @@ public class PrefixSumBenchmark {
       assertEqual(expectedOutput, this::prefixSumVector512, bh);
       assertEqual(expectedOutput, this::prefixSumVector512_v2, bh);
       if (size == 128) {
-        assertEqual(expectedOutput, this::prefixSumScalarInlined, bh);
-        assertEqual(expectedOutput, this::prefixSumVector256_v2_inline, bh);
+        assertEqual(expectedOutput, this::prefixSumScalarUnrolled, bh);
+        assertEqual(expectedOutput, this::prefixSumVector256_v2_unrolled, bh);
       }
     }
   }
